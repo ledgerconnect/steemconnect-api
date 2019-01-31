@@ -13,15 +13,6 @@ module.exports = {
     "browser": true,
   },
   "extends": "airbnb",
-  "rules": {
-    "react/jsx-filename-extension": 0,
-    "react/require-extension": "off",
-  },
-  "plugins": [
-    "react",
-    "jsx-a11y",
-    "import"
-  ],
   "globals": {
     "document": true,
     "Headers": true,

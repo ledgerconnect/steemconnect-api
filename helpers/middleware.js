@@ -41,20 +41,55 @@ const strategy = (req, res, next) => {
     || req.query.refresh_token
     || req.body.refresh_token;
 
-  let decoded;
+  let isJwt = false;
   try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     /* eslint-disable no-param-reassign */
     req.token = token;
     req.role = decoded.role;
     req.user = decoded.user;
     req.proxy = decoded.proxy;
     req.scope = decoded.scope || [];
+    req.type = 'jwt';
+    isJwt = true;
     /* eslint-enable no-param-reassign */
-  } catch (err) {
-    // console.log(err);
+  } catch (e) {
+    // console.log(e);
   }
-  next();
+
+  if (!isJwt) {
+    try {
+      const decoded = Buffer.from(token, 'base64').toString();
+      const tokenObj = JSON.parse(decoded);
+      const signedMessage = tokenObj.signed_message;
+      if (
+        tokenObj.authors
+        && tokenObj.authors[0]
+        && signedMessage
+        && signedMessage.type
+        && signedMessage.type === 'login'
+        && signedMessage.app
+      ) {
+        /** TODO verify signature */
+        /* eslint-disable no-param-reassign */
+        req.token = token;
+        req.role = 'app';
+        req.user = tokenObj.authors[0];
+        req.proxy = signedMessage.app;
+        req.scope = ['login'];
+        req.type = 'signature';
+        /* eslint-enable no-param-reassign */
+        next();
+      } else {
+        next();
+      }
+    } catch (e) {
+      console.log('Token signature decoding failed', e);
+      next();
+    }
+  } else {
+    next();
+  }
 };
 
 const authenticate = roles => async (req, res, next) => {
@@ -82,7 +117,7 @@ const authenticate = roles => async (req, res, next) => {
       error: 'invalid_grant',
       error_description: 'The token has invalid role',
     });
-  } else if (req.role === 'app') {
+  } else if (req.role === 'app' && req.type === 'jwt') {
     const token = await tokens.findOne({ where: { token: req.token } });
     if (!token) {
       res.status(401).json({

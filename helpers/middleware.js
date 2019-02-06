@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const intersection = require('lodash/intersection');
 const { tokens, apps } = require('../db/models');
+const { verifySignature } = require('./token');
 
 /**
  * Check if user allow app proxy account to post on his behalf
@@ -65,21 +66,31 @@ const strategy = (req, res, next) => {
       if (
         tokenObj.authors
         && tokenObj.authors[0]
+        && tokenObj.signatures
+        && tokenObj.signatures[0]
         && signedMessage
         && signedMessage.type
         && signedMessage.type === 'login'
         && signedMessage.app
       ) {
-        /** TODO verify signature */
-        /* eslint-disable no-param-reassign */
-        req.token = token;
-        req.role = 'app';
-        req.user = tokenObj.authors[0];
-        req.proxy = signedMessage.app;
-        req.scope = ['login'];
-        req.type = 'signature';
-        /* eslint-enable no-param-reassign */
-        next();
+        const message = JSON.stringify({
+          signed_message: signedMessage,
+          authors: tokenObj.authors,
+        });
+        verifySignature(message, tokenObj.authors[0], tokenObj.signatures[0], (err, isValid) => {
+          if (!err && isValid) {
+            console.log('Signature based token success');
+            /* eslint-disable no-param-reassign */
+            req.token = token;
+            req.role = 'app';
+            req.user = tokenObj.authors[0];
+            req.proxy = signedMessage.app;
+            req.scope = ['login'];
+            req.type = 'signature';
+            /* eslint-enable no-param-reassign */
+          }
+          next();
+        });
       } else {
         next();
       }

@@ -77,13 +77,14 @@ const strategy = (req, res, next) => {
           signed_message: signedMessage,
           authors: tokenObj.authors,
         });
-        verifySignature(message, tokenObj.authors[0], tokenObj.signatures[0], (err, isValid) => {
+        const username = tokenObj.authors[0];
+        verifySignature(message, username, tokenObj.signatures[0], (err, isValid) => {
           if (!err && isValid) {
-            console.log('Signature based token success');
+            console.log('Token signature is valid', username);
             /* eslint-disable no-param-reassign */
             req.token = token;
             req.role = 'app';
-            req.user = tokenObj.authors[0];
+            req.user = username;
             req.proxy = signedMessage.app;
             req.scope = ['login'];
             req.type = 'signature';
@@ -95,7 +96,7 @@ const strategy = (req, res, next) => {
         next();
       }
     } catch (e) {
-      console.log('Token signature decoding failed', e);
+      // console.log('Token signature decoding failed', e);
       next();
     }
   } else {

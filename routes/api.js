@@ -36,6 +36,16 @@ router.put('/me', authenticate('app'), async (req, res) => {
         return;
       }
 
+      /** Store global metadata update count per month and by app */
+      const month = new Date().getUTCMonth() + 1;
+      const year = new Date().getUTCFullYear();
+      redis.multi([
+        ['incr', 'sc-api:metadata'],
+        ['incr', `sc-api:metadata:${month}-${year}`],
+        ['incr', `sc-api:metadata:@${req.proxy}`],
+        ['incr', `sc-api:metadata:@${req.proxy}:${month}-${year}`],
+      ]).execAsync();
+
       res.json({
         user: req.user,
         _id: req.user,
@@ -124,12 +134,14 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
   } else {
     console.log(`Broadcast transaction for @${req.user} from app @${req.proxy}`);
 
-    /** Store global tx count per month and by app */
+    /** Store global broadcast count per month and by app */
     const month = new Date().getUTCMonth() + 1;
     const year = new Date().getUTCFullYear();
     redis.multi([
-      ['incr', `steemconnect:tx:${month}-${year}`],
-      ['incr', `steemconnect:tx:${month}-${year}:${req.proxy}`],
+      ['incr', 'sc-api:broadcast'],
+      ['incr', `sc-api:broadcast:${month}-${year}`],
+      ['incr', `sc-api:broadcast:@${req.proxy}`],
+      ['incr', `sc-api:broadcast:@${req.proxy}:${month}-${year}`],
     ]).execAsync();
 
     req.steem.broadcast.send(

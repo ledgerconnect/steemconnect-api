@@ -5,6 +5,7 @@ const { issueUserToken } = require('../helpers/token');
 const { getUserMetadata, updateUserMetadata } = require('../helpers/metadata');
 const { getErrorMessage, isOperationAuthor } = require('../helpers/operation');
 const config = require('../config.json');
+const redis = require('../helpers/redis');
 
 const router = express.Router(); // eslint-disable-line new-cap
 
@@ -122,6 +123,15 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
     });
   } else {
     console.log(`Broadcast transaction for @${req.user} from app @${req.proxy}`);
+
+    /** Store global tx count per month and by app */
+    const month = new Date().getUTCMonth() + 1;
+    const year = new Date().getUTCFullYear();
+    redis.multi([
+      ['incr', `steemconnect:tx:${month}-${year}`],
+      ['incr', `steemconnect:tx:${month}-${year}:${req.proxy}`],
+    ]).execAsync();
+
     req.steem.broadcast.send(
       { operations, extensions: [] },
       { posting: process.env.BROADCASTER_POSTING_WIF },

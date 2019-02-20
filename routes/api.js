@@ -152,7 +152,7 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
         if (!err) {
           res.json({ result });
         } else {
-          console.error(err, 'Transaction broadcast failed', operations);
+          console.error('Transaction broadcast failed', JSON.stringify(operations), JSON.stringify(err));
           res.status(500).json({
             error: 'server_error',
             error_description: getErrorMessage(err) || err.message || err,

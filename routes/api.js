@@ -1,5 +1,6 @@
 const express = require('express');
 const { authenticate, verifyPermissions } = require('../helpers/middleware');
+const client = require('../helpers/client');
 const { encode } = require('@steemit/steem-js/lib/auth/memo');
 const { issueUserToken } = require('../helpers/token');
 const { getUserMetadata, updateUserMetadata } = require('../helpers/metadata');
@@ -14,7 +15,7 @@ router.put('/me', authenticate('app'), async (req, res) => {
   const scope = req.scope.length ? req.scope : config.authorized_operations;
   let accounts;
   try {
-    accounts = await req.steem.api.getAccountsAsync([req.user]);
+    accounts = await client.database.getAccounts([req.user]);
   } catch (err) {
     console.error(err, 'me: SteemAPI request failed', req.user);
     res.status(501).send('SteemAPI request failed');
@@ -74,7 +75,7 @@ router.all('/me', authenticate(), async (req, res) => {
   const scope = req.scope.length ? req.scope : config.authorized_operations;
   let accounts;
   try {
-    accounts = await req.steem.api.getAccountsAsync([req.user]);
+    accounts = await client.database.getAccounts([req.user]);
   } catch (err) {
     console.error(err, 'me: SteemAPI request failed', req.user);
     res.status(501).send('SteemAPI request failed');
@@ -169,7 +170,7 @@ router.all('/login/challenge', async (req, res) => {
   const token = issueUserToken(username);
   let accounts;
   try {
-    accounts = await req.steem.api.getAccountsAsync([username]);
+    accounts = await client.database.getAccounts([username]);
   } catch (err) {
     console.error(err, 'challenge: SteemAPI request failed', username);
     res.status(501).send('SteemAPI request failed');

@@ -9,9 +9,7 @@ const steem = require('@steemit/steem-js');
 const db = require('./db/models');
 const { strategy } = require('./helpers/middleware');
 
-if (process.env.STEEMD_URL_SERVER) {
-  steem.api.setOptions({ url: process.env.STEEMD_URL_SERVER });
-} else if (process.env.STEEMD_URL) {
+if (process.env.STEEMD_URL) {
   steem.api.setOptions({ url: process.env.STEEMD_URL });
 }
 
@@ -45,7 +43,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api', require('./routes/api'));
 app.use('/api/oauth2', require('./routes/oauth2'));
-app.use('/', require('./routes'));
+
+app.get('/*', (req, res) => {
+  res.redirect(`https://app.steemconnect.com${req.url}`);
+});
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

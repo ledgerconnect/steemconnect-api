@@ -2,6 +2,7 @@ const express = require('express');
 const { authenticate, verifyPermissions } = require('../helpers/middleware');
 const client = require('../helpers/client');
 const { encode } = require('@steemit/steem-js/lib/auth/memo');
+const { tokens } = require('../db/models');
 const { issueUserToken } = require('../helpers/token');
 const { getUserMetadata, updateUserMetadata } = require('../helpers/metadata');
 const { getErrorMessage, isOperationAuthor, getAppProfile } = require('../helpers/utils');
@@ -212,7 +213,7 @@ router.all('/token/revoke/:type/:clientId?', authenticate('user'), async (req, r
     (type === 'user' && (where.user || where.client_id)) ||
     (type === 'app' && where.client_id)
   ) {
-    await req.db.tokens.destroy({ where });
+    await tokens.destroy({ where });
   }
 
   res.json({ success: true });

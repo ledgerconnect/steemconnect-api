@@ -6,7 +6,6 @@ const http = require('http');
 const https = require('https');
 const cors = require('cors');
 const steem = require('@steemit/steem-js');
-const db = require('./db/models');
 const { strategy } = require('./helpers/middleware');
 
 if (process.env.STEEMD_URL) {
@@ -29,7 +28,6 @@ app.disable('x-powered-by');
 
 app.use((req, res, next) => {
   req.steem = steem;
-  req.db = db;
   next();
 });
 

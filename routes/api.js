@@ -18,7 +18,7 @@ router.put('/me', authenticate('app'), async (req, res) => {
   try {
     accounts = await client.database.getAccounts([req.user]);
   } catch (err) {
-    console.error(err, 'me: SteemAPI request failed', req.user);
+    console.error(`Get account @${req.user} failed`, err);
     res.status(501).send('SteemAPI request failed');
     return;
   }
@@ -29,11 +29,11 @@ router.put('/me', authenticate('app'), async (req, res) => {
     const bytes = Buffer.byteLength(JSON.stringify(user_metadata), 'utf8');
     if (bytes <= config.user_metadata.max_size) {
       /** Save user_metadata object on database */
-      console.log(`Store object for ${req.user} (size ${bytes} bytes)`);
+      console.log(`Store object for @${req.user} (size ${bytes} bytes)`);
       try {
         await updateUserMetadata(req.proxy, req.user, user_metadata);
       } catch (err) {
-        console.error(err, 'me: updateMetadata failed', req.user);
+        console.error(`Update metadata of @${req.user} failed`, err);
         res.status(501).send('request failed');
         return;
       }
@@ -78,7 +78,7 @@ router.all('/me', authenticate(), async (req, res) => {
   try {
     accounts = await client.database.getAccounts([req.user]);
   } catch (err) {
-    console.error(err, 'me: SteemAPI request failed', req.user);
+    console.error(`Get account @${req.user} failed`, err);
     res.status(501).send('SteemAPI request failed');
     return;
   }
@@ -88,7 +88,7 @@ router.all('/me', authenticate(), async (req, res) => {
     ? await getUserMetadata(req.proxy, req.user)
     : undefined;
   } catch (err) {
-    console.error(err, 'me: couldnt parse metadata failed', req.user);
+    console.error(`Get user metadata of @${req.user} failed`, err);
     res.status(501).send('request failed');
     return;
   }
@@ -150,11 +150,10 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
       { operations, extensions: [] },
       { posting: process.env.BROADCASTER_POSTING_WIF },
       (err, result) => {
-        /** Save in database the operations broadcasted */
         if (!err) {
           res.json({ result });
         } else {
-          console.error('Transaction broadcast failed', JSON.stringify(operations), JSON.stringify(err));
+          console.error(`Transaction broadcast failed for @${req.user}`, JSON.stringify(operations), JSON.stringify(err));
           res.status(500).json({
             error: 'server_error',
             error_description: getErrorMessage(err) || err.message || err,
@@ -173,7 +172,7 @@ router.all('/login/challenge', async (req, res) => {
   try {
     accounts = await client.database.getAccounts([username]);
   } catch (err) {
-    console.error(err, 'challenge: SteemAPI request failed', username);
+    console.error(`Get account @${username} failed`, err);
     res.status(501).send('SteemAPI request failed');
     return;
   }

@@ -146,21 +146,15 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
       ['incr', `sc-api:broadcast:@${req.proxy}:${month}-${year}`],
     ]).execAsync();
 
-    req.steem.broadcast.send(
-      { operations, extensions: [] },
-      { posting: process.env.BROADCASTER_POSTING_WIF },
-      (err, result) => {
-        if (!err) {
-          res.json({ result });
-        } else {
-          console.error(`Transaction broadcast failed for @${req.user}`, JSON.stringify(operations), JSON.stringify(err));
-          res.status(500).json({
-            error: 'server_error',
-            error_description: getErrorMessage(err) || err.message || err,
-          });
-        }
-      }
-    );
+    client.customBroadcast(operations, process.env.BROADCASTER_POSTING_WIF).then((result) => {
+      res.json({ result });
+    }).catch((e) => {
+      console.log(`Transaction broadcast failed for @${req.user}`, JSON.stringify(operations), JSON.stringify(e));
+      res.status(500).json({
+        error: 'server_error',
+        error_description: e,
+      });
+    });
   }
 });
 

@@ -68,6 +68,7 @@ router.put('/me', authenticate('app'), async (req, res) => {
     error: 'invalid_request',
     error_description: 'User metadata must be an object',
   });
+  return;
 });
 
 /** Get my account details */
@@ -84,8 +85,8 @@ router.all('/me', authenticate(), async (req, res) => {
   let userMetadata;
   try {
     userMetadata = req.role === 'app'
-      ? await getUserMetadata(req.proxy, req.user)
-      : undefined;
+    ? await getUserMetadata(req.proxy, req.user)
+    : undefined;
   } catch (err) {
     console.error(`Get user metadata of @${req.user} failed`, err);
     res.status(501).send('request failed');
@@ -99,6 +100,7 @@ router.all('/me', authenticate(), async (req, res) => {
     scope,
     user_metadata: userMetadata,
   });
+  return;
 });
 
 /** Broadcast transaction */
@@ -132,6 +134,7 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
       error_description: `This access_token allow you to broadcast transaction only for the account @${req.user}`,
     });
   } else {
+
     /** Store global broadcast count per month and by app */
     const month = new Date().getUTCMonth() + 1;
     const year = new Date().getUTCFullYear();
@@ -187,7 +190,7 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
 });
 
 router.all('/login/challenge', async (req, res) => {
-  const { username } = req.query;
+  const username = req.query.username;
   const role = ['posting', 'active', 'owner'].includes(req.query.role) ? req.query.role : 'posting';
   const token = issueUserToken(username);
   let accounts;
@@ -199,11 +202,14 @@ router.all('/login/challenge', async (req, res) => {
     return;
   }
   const keyAuths = accounts[0][role].key_auths;
-  const codes = keyAuths.map(keyAuth => encode(process.env.BROADCASTER_POSTING_WIF, keyAuth[0], `#${token}`));
+  const codes = keyAuths.map(keyAuth =>
+    encode(process.env.BROADCASTER_POSTING_WIF, keyAuth[0], `#${token}`)
+  );
   res.json({
     username,
     codes,
   });
+  return;
 });
 
 /**
@@ -228,8 +234,8 @@ router.all('/token/revoke/:type/:clientId?', authenticate('user'), async (req, r
   }
 
   if (
-    (type === 'user' && (where.user || where.client_id))
-    || (type === 'app' && where.client_id)
+    (type === 'user' && (where.user || where.client_id)) ||
+    (type === 'app' && where.client_id)
   ) {
     await tokens.destroy({ where });
   }

@@ -134,7 +134,6 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
       error_description: `This access_token allow you to broadcast transaction only for the account @${req.user}`,
     });
   } else {
-    console.log(`Broadcast transaction for @${req.user} from app @${req.proxy}`);
 
     /** Store global broadcast count per month and by app */
     const month = new Date().getUTCMonth() + 1;
@@ -146,13 +145,45 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
       ['incr', `sc-api:broadcast:@${req.proxy}:${month}-${year}`],
     ]).execAsync();
 
-    client.customBroadcast(operations, process.env.BROADCASTER_POSTING_WIF).then((result) => {
-      res.json({ result });
+    /** Broadcast with Steem.js
+    req.steem.broadcast.send(
+      { operations, extensions: [] },
+      { posting: process.env.BROADCASTER_POSTING_WIF },
+      (err, result) => {
+        if (!err) {
+          console.log(`Broadcasted transaction for @${req.user} from app @${req.proxy}`);
+          res.json({ result });
+        } else {
+          console.log(
+            `Transaction broadcast failed for @${req.user}`,
+            JSON.stringify(operations), JSON.stringify(err)
+          );
+          res.status(500).json({
+            error: 'server_error',
+            error_description: getErrorMessage(err) || err.message || err,
+          });
+        }
+      }
+    );
+    */
+
+    /** Sign and prepare tx with dsteem, broadcast with Steem.js */
+    client.customPrepareTx(operations, process.env.BROADCASTER_POSTING_WIF).then((signedTx) => {
+      req.steem.api.broadcastTransactionSynchronousAsync(signedTx).then((result) => {
+        console.log(`Broadcast transaction for @${req.user} from app @${req.proxy}`);
+        res.json({ result });
+      }).catch((e) => {
+        console.log(`Transaction broadcast failed for @${req.user}`, JSON.stringify(operations), JSON.stringify(e));
+        res.status(500).json({
+          error: 'server_error',
+          error_description: getErrorMessage(e) || e.message || e,
+        });
+      });
     }).catch((e) => {
-      console.log(`Transaction broadcast failed for @${req.user}`, JSON.stringify(operations), JSON.stringify(e));
+      console.error('Prepare transaction failed', JSON.stringify(e));
       res.status(500).json({
         error: 'server_error',
-        error_description: e,
+        error_description: getErrorMessage(e) || e.message || e,
       });
     });
   }

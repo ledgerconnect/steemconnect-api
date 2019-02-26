@@ -2,7 +2,7 @@ const { Client, PrivateKey } = require('dsteem');
 
 const client = new Client(process.env.STEEMD_URL || 'https://api.steemit.com');
 
-client.customBroadcast = (operations, wif) => new Promise((resolve, reject) => {
+client.customPrepareTx = (operations, wif) => new Promise((resolve, reject) => {
   const expireTime = 60 * 1000;
   const key = PrivateKey.fromString(wif);
   client.database.getDynamicGlobalProperties().then((props) => {
@@ -14,11 +14,14 @@ client.customBroadcast = (operations, wif) => new Promise((resolve, reject) => {
       ref_block_prefix: Buffer.from(props.head_block_id, 'hex').readUInt32LE(4),
     };
     const signedTx = client.broadcast.sign(tx, key);
-    client.broadcast.send(signedTx).then((result) => {
+    resolve(signedTx);
+    /**
+     client.broadcast.send(signedTx).then(result => {
       resolve({ ...result, ...signedTx });
-    }).catch((e) => {
-      reject({ cause: e });
+    }).catch(e => {
+      reject(e);
     });
+     */
   }).catch((e) => {
     reject(e);
   });

@@ -172,7 +172,7 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
       }).catch((e) => {
         console.log(
           `Transaction broadcast failed for @${req.user}`,
-          JSON.stringify(operations), getErrorMessage(e) || e.message || JSON.stringify(e),
+          JSON.stringify(operations), getErrorMessage(e) || e.message,
         );
         res.status(500).json({
           error: 'server_error',

@@ -1,13 +1,13 @@
 const express = require('express');
-const { authenticate, verifyPermissions } = require('../helpers/middleware');
-const client = require('../helpers/client');
 const { encode } = require('@steemit/steem-js/lib/auth/memo');
 const { tokens } = require('../db/models');
+const { authenticate, verifyPermissions } = require('../helpers/middleware');
 const { issueUserToken } = require('../helpers/token');
 const { getUserMetadata, updateUserMetadata } = require('../helpers/metadata');
 const { getErrorMessage, isOperationAuthor, getAppProfile } = require('../helpers/utils');
-const config = require('../config.json');
+const client = require('../helpers/client');
 const redis = require('../helpers/redis');
+const config = require('../config.json');
 
 const router = express.Router(); // eslint-disable-line new-cap
 

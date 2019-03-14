@@ -153,7 +153,7 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
         } else {
           console.log(
             `Transaction broadcast failed for @${req.user}`,
-            JSON.stringify(operations), JSON.stringify(err)
+            getErrorMessage(err) || err.message || null,
           );
           res.status(500).json({
             error: 'server_error',

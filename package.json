@@ -13,7 +13,6 @@
     "body-parser": "^1.18.3",
     "connection-string": "^1.0.1",
     "cors": "^2.8.5",
-    "debug": "^4.1.1",
     "dsteem": "^0.11.2",
     "express": "^4.16.4",
     "isomorphic-fetch": "^2.2.1",

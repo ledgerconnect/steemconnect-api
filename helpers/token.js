@@ -1,6 +1,5 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const debug = require('debug')('sc2:server');
 const { PublicKey, cryptoUtils, Signature } = require('dsteem');
 const client = require('./client');
 const db = require('./db');
@@ -38,7 +37,7 @@ const issueAppToken = async (proxy, user, scope = []) => {
     };
     await db.queryAsync('INSERT INTO token SET ?', mysqlToken);
 
-    debug(`A token for user @${user} with ${proxy} as proxy has been saved on database.`);
+    console.log(`A token for user @${user} with ${proxy} as proxy has been saved on database.`);
   } catch (error) {
     throw new Error(error);
   }

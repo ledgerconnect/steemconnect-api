@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const isBase64 = require('is-base64');
 const { intersection, has } = require('lodash');
 const { tokens } = require('../db/models');
 const { verifySignature } = require('./token');
@@ -73,7 +74,7 @@ const strategy = (req, res, next) => {
     // console.log(e);
   }
 
-  if (!isJwt) {
+  if (!isJwt && isBase64(token)) {
     try {
       const decoded = Buffer.from(token, 'base64').toString();
       const tokenObj = JSON.parse(decoded);

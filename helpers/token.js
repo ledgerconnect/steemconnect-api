@@ -35,7 +35,7 @@ const issueAppToken = async (proxy, user, scope = []) => {
       username: user,
       expiration,
     };
-    await db.queryAsync('INSERT INTO token SET ?', mysqlToken);
+    await db.queryAsync('REPLACE INTO token SET ?', mysqlToken);
 
     console.log(`A token for user @${user} with ${proxy} as proxy has been saved on database.`);
   } catch (error) {

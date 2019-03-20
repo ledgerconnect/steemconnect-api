@@ -7,7 +7,7 @@ const parse = require('connection-string');
 const config = parse(process.env.MYSQL_DATABASE_URL);
 config.connectionLimit = 140;
 config.multipleStatements = true;
-config.database = config.path[0];
+[config.database] = config.path;
 config.host = config.hosts[0].name;
 
 Promise.promisifyAll([Pool, Connection]);

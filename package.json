@@ -6,7 +6,7 @@
     "lint": "eslint 'routes/**/*.js' 'helpers/**/*.js' '*.js'"
   },
   "dependencies": {
-    "@steemit/steem-js": "git+https://github.com/bonustrack/steem-js.git#ecb85534d895d40cf111b89d03d72bdbb1a90fbb",
+    "@steemit/steem-js": "git+https://github.com/bonustrack/steem-js.git#2e0e479b71a7b03f97e23dfcc90c3db98e6b6961",
     "bluebird": "^3.5.3",
     "body-parser": "^1.18.3",
     "connection-string": "^1.0.1",

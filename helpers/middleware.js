@@ -99,12 +99,12 @@ const strategy = (req, res, next) => {
         verifySignature(message, username, tokenObj.signatures[0], (err, isValid) => {
           if (!err && isValid) {
             console.log('Token signature is valid', username);
-            let scope = [];
-            if (signedMessage.type === 'login') scope.push('login');
-            if (signedMessage.type === 'posting') scope = scope.concat(config.authorized_operations);
+            let scope;
+            if (signedMessage.type === 'login') scope = ['login'];
+            if (signedMessage.type === 'posting') scope = config.authorized_operations;
             if (signedMessage.type === 'offline') {
+              scope = config.authorized_operations;
               scope.push('offline');
-              scope = scope.concat(config.authorized_operations);
             }
             /* eslint-disable no-param-reassign */
             req.token = token;

@@ -138,9 +138,10 @@ const authenticate = roles => async (req, res, next) => {
   }
 
   if (!req.role || (role && req.role !== role)) {
+    const expected = Array.isArray(roles) ? roles.join('", "') : roles;
     res.status(401).json({
       error: 'invalid_grant',
-      error_description: 'The token has invalid role',
+      error_description: `The token has an invalid role, found "${req.role}", expected "${expected}"`,
     });
   } else if (req.role === 'app' && req.type === 'jwt') {
     let token;

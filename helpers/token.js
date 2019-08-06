@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const {
   PublicKey,
@@ -7,37 +6,23 @@ const {
   Signature,
 } = require('dsteem');
 const client = require('./client');
-const db = require('./db');
-const config = require('../config.json');
+const { b64uEnc } = require('./utils');
 
 /** Create a new access token for application and store it on the database */
-const issueAppToken = async (proxy, user, scope = []) => {
-  const token = jwt.sign(
-    {
-      role: 'app', proxy, user, scope,
+const issueAppToken = (proxy, user) => {
+  const message = {
+    signed_message: {
+      type: 'posting',
+      app: proxy,
     },
-    process.env.JWT_SECRET,
-    { expiresIn: config.token_expiration },
-  );
-
-  try {
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    const expiration = parseInt(new Date().getTime() / 1000, 10) + config.token_expiration;
-    const mysqlToken = {
-      token_hash: tokenHash,
-      client_id: proxy,
-      username: user,
-      expiration,
-    };
-    await db.queryAsync('REPLACE INTO token SET ?', mysqlToken);
-    await db.queryAsync('DELETE FROM token WHERE expiration < ?', parseInt(new Date().getTime() / 1000, 10));
-
-    console.log(`A token for user @${user} with ${proxy} as proxy has been saved on database.`);
-  } catch (error) {
-    throw new Error(error);
-  }
-
-  return token;
+    authors: [user],
+    timestamp: parseInt(new Date().getTime() / 1000, 10),
+  };
+  const hash = cryptoUtils.sha256(JSON.stringify(message));
+  const privateKey = PrivateKey.fromString(process.env.BROADCASTER_POSTING_WIF);
+  const signature = privateKey.sign(hash).toString();
+  message.signatures = [signature];
+  return b64uEnc(JSON.stringify(message));
 };
 
 /**

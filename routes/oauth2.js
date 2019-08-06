@@ -12,7 +12,7 @@ router.all('/token', authenticate(['code', 'refresh']), async (req, res) => {
   console.log(`Issue app token for user @${req.user} using @${req.proxy} proxy.`);
   let accessToken;
   try {
-    accessToken = await issueAppToken(req.proxy, req.user, req.scope);
+    accessToken = issueAppToken(req.proxy, req.user);
   } catch (e) {
     console.error('Unable to issue app token', e);
   }

@@ -8,13 +8,9 @@ const {
 const client = require('./client');
 const { b64uEnc } = require('./utils');
 
-/** Create a new access token for application and store it on the database */
 const issueAppToken = (proxy, user) => {
   const message = {
-    signed_message: {
-      type: 'posting',
-      app: proxy,
-    },
+    signed_message: { type: 'posting', app: proxy },
     authors: [user],
     timestamp: parseInt(new Date().getTime() / 1000, 10),
   };

@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const isBase64 = require('is-base64');
 const { intersection, has } = require('lodash');
 const db = require('./db');
-const { verifySignature } = require('./token');
+const { verify } = require('./token');
 const { getAppProfile, b64uToB64 } = require('./utils');
 const client = require('./client');
 const config = require('../config.json');
@@ -96,7 +96,7 @@ const strategy = (req, res, next) => {
           timestamp: tokenObj.timestamp,
         });
         const username = tokenObj.authors[0];
-        verifySignature(message, username, tokenObj.signatures[0], (err, isValid) => {
+        verify(message, username, tokenObj.signatures[0], (err, isValid) => {
           if (!err && isValid) {
             console.log('Token signature is valid', username);
             let scope;

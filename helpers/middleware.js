@@ -87,7 +87,8 @@ const strategy = (req, res, next) => {
         && tokenObj.signatures[0]
         && signedMessage
         && signedMessage.type
-        && ['login', 'posting', 'offline', 'code'].includes(signedMessage.type)
+        && ['login', 'posting', 'offline', 'code', 'refresh']
+          .includes(signedMessage.type)
         && signedMessage.app
       ) {
         const message = JSON.stringify({

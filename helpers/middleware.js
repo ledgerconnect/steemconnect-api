@@ -1,6 +1,4 @@
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
-const isBase64 = require('is-base64');
+const { createHash } = require('crypto');
 const { intersection, has } = require('lodash');
 const { verify } = require('./token');
 const { getAppProfile, b64uToB64 } = require('./utils');
@@ -48,7 +46,7 @@ const verifyPermissions = async (req, res, next) => {
 const strategy = (req, res, next) => {
   let authorization = req.get('authorization');
   if (authorization) authorization = authorization.replace(/^(Bearer|Basic)\s/, '').trim();
-  let token = authorization
+  const token = authorization
     || req.query.access_token
     || req.body.access_token
     || req.query.code
@@ -56,29 +54,9 @@ const strategy = (req, res, next) => {
     || req.query.refresh_token
     || req.body.refresh_token;
 
-  let isJwt = false;
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role === 'refresh') {
-      /* eslint-disable no-param-reassign */
-      req.token = token;
-      req.role = decoded.role;
-      req.user = decoded.user;
-      req.proxy = decoded.proxy;
-      req.scope = decoded.scope || [];
-      req.type = 'jwt';
-      isJwt = true;
-      /* eslint-enable no-param-reassign */
-    }
-  } catch (e) {
-    // console.log(e);
-  }
-
-  if (!isJwt && token) token = b64uToB64(token);
-
-  if (!isJwt && isBase64(token)) {
+  if (token) {
     try {
-      const decoded = Buffer.from(token, 'base64').toString();
+      const decoded = Buffer.from(b64uToB64(token), 'base64').toString();
       const tokenObj = JSON.parse(decoded);
       const signedMessage = tokenObj.signed_message;
       if (
@@ -149,7 +127,7 @@ const authenticate = roles => async (req, res, next) => {
     }
 
     const secret = req.query.client_secret || req.body.client_secret;
-    const secretHash = crypto.createHash('sha256').update(secret).digest('hex');
+    const secretHash = createHash('sha256').update(secret).digest('hex');
 
     if (!app.secret || secretHash !== app.secret) {
       res.status(401).json({

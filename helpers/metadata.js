@@ -12,22 +12,6 @@ const getUserMetadata = async (clientId, username) => {
   return {};
 };
 
-const updateUserMetadata = async (clientId, username, metadata) => {
-  try {
-    const params = {
-      client_id: clientId,
-      username,
-      metadata: JSON.stringify(metadata),
-    };
-    const query = 'REPLACE INTO metadata SET ?';
-    await db.query(query, [params]);
-  } catch (e) {
-    console.error('Failed to update user metadata', JSON.stringify(e));
-    throw new Error(e);
-  }
-};
-
 module.exports = {
   getUserMetadata,
-  updateUserMetadata,
 };

@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticate, verifyPermissions } = require('../helpers/middleware');
-const { getUserMetadata, updateUserMetadata } = require('../helpers/metadata');
+const { getUserMetadata } = require('../helpers/metadata');
 const { getErrorMessage, isOperationAuthor } = require('../helpers/utils');
 const { issue } = require('../helpers/token');
 const client = require('../helpers/client');
@@ -9,56 +9,7 @@ const redis = require('../helpers/redis');
 const metadataApps = require('../helpers/metadata.json');
 const config = require('../config.json');
 
-const router = express.Router(); // eslint-disable-line new-cap
-
-/** Update user_metadata */
-router.put('/me', authenticate('app'), async (req, res) => {
-  const scope = req.scope.length ? req.scope : config.authorized_operations;
-  let accounts;
-  try {
-    accounts = await client.database.getAccounts([req.user]);
-  } catch (err) {
-    console.error(`Get account @${req.user} failed`, err);
-    res.status(501).send('SteemAPI request failed');
-    return;
-  }
-  const userMetadata = req.body.user_metadata;
-
-  if (typeof userMetadata === 'object') { // eslint-disable-line camelcase
-    /** Check object size */
-    const bytes = Buffer.byteLength(JSON.stringify(userMetadata), 'utf8');
-    if (bytes <= config.user_metadata.max_size) {
-      /** Save userMetadata object on database */
-      console.log(`Store object for @${req.user} (size ${bytes} bytes)`);
-      try {
-        await updateUserMetadata(req.proxy, req.user, userMetadata);
-      } catch (err) {
-        console.error(`Update metadata of @${req.user} failed`, err);
-        res.status(501).send('request failed');
-        return;
-      }
-
-      res.json({
-        user: req.user,
-        _id: req.user,
-        name: req.user,
-        account: accounts[0],
-        scope,
-        user_metadata: userMetadata,
-      });
-      return;
-    }
-    res.status(413).json({
-      error: 'invalid_request',
-      error_description: `User metadata object must not exceed ${config.user_metadata.max_size / 1000000} MB`,
-    });
-    return;
-  }
-  res.status(400).json({
-    error: 'invalid_request',
-    error_description: 'User metadata must be an object',
-  });
-});
+const router = express.Router();
 
 /** Get my account details */
 router.all('/me', authenticate(), async (req, res) => {
@@ -175,6 +126,14 @@ router.all('/oauth2/token', authenticate(['code', 'refresh']), async (req, res) 
 /** Revoke access token */
 router.all('/oauth2/token/revoke', authenticate('app'), async (req, res) => {
   res.json({ success: true });
+});
+
+/** Update user_metadata */
+router.put('/me', authenticate('app'), async (req, res) => {
+  res.status(413).json({
+    error: 'invalid_request',
+    error_description: 'This feature has been deprecated',
+  });
 });
 
 module.exports = router;

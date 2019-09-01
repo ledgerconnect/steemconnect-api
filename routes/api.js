@@ -4,7 +4,6 @@ const { getErrorMessage, isOperationAuthor } = require('../helpers/utils');
 const { issue } = require('../helpers/token');
 const client = require('../helpers/client');
 const steem = require('../helpers/steem');
-const redis = require('../helpers/redis');
 const config = require('../config.json');
 
 const router = express.Router();
@@ -17,11 +16,13 @@ router.all('/me', authenticate(), async (req, res) => {
     accounts = await client.database.getAccounts([req.user]);
   } catch (err) {
     console.error(`Get account @${req.user} failed`, err);
-    res.status(501).send('SteemAPI request failed');
-    return;
+    return res.status(501).json({
+      error: 'server_error',
+      error_description: 'Request to Steemd API failed',
+    });
   }
 
-  res.json({
+  return res.json({
     user: req.user,
     _id: req.user,
     name: req.user,
@@ -62,18 +63,6 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
       error_description: `This access_token allow you to broadcast transaction only for the account @${req.user}`,
     });
   } else {
-    /** Store global broadcast count per month and by app */
-    const month = new Date().getUTCMonth() + 1;
-    const year = new Date().getUTCFullYear();
-    redis.multi([
-      ['incr', 'sc-api:broadcast'],
-      ['incr', `sc-api:broadcast:${month}-${year}`],
-      ['incr', `sc-api:broadcast:@${req.proxy}`],
-      ['incr', `sc-api:broadcast:@${req.proxy}:${month}-${year}`],
-    ]).execAsync()
-      .catch(e => console.error('Failed to incr data on redis', e));
-
-    /** Broadcast with Steem.js */
     steem.broadcast.send(
       { operations, extensions: [] },
       { posting: process.env.BROADCASTER_POSTING_WIF },
@@ -99,7 +88,7 @@ router.post('/broadcast', authenticate('app'), verifyPermissions, async (req, re
 
 /** Request app access token */
 router.all('/oauth2/token', authenticate(['code', 'refresh']), async (req, res) => {
-  console.log(`Issue app token for user @${req.user} using @${req.proxy} proxy.`);
+  console.log(`Issue tokens for user @${req.user} for @${req.proxy} app.`);
   res.json({
     access_token: issue(req.proxy, req.user, 'posting'),
     refresh_token: issue(req.proxy, req.user, 'refresh'),
@@ -111,14 +100,6 @@ router.all('/oauth2/token', authenticate(['code', 'refresh']), async (req, res) 
 /** Revoke access token */
 router.all('/oauth2/token/revoke', authenticate('app'), async (req, res) => {
   res.json({ success: true });
-});
-
-/** Update user_metadata */
-router.put('/me', (req, res) => {
-  res.status(413).json({
-    error: 'invalid_request',
-    error_description: 'This feature has been deprecated',
-  });
 });
 
 module.exports = router;

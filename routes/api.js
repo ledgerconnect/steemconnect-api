@@ -1,12 +1,10 @@
 const express = require('express');
 const { authenticate, verifyPermissions } = require('../helpers/middleware');
-const { getUserMetadata } = require('../helpers/metadata');
 const { getErrorMessage, isOperationAuthor } = require('../helpers/utils');
 const { issue } = require('../helpers/token');
 const client = require('../helpers/client');
 const steem = require('../helpers/steem');
 const redis = require('../helpers/redis');
-const metadataApps = require('../helpers/metadata.json');
 const config = require('../config.json');
 
 const router = express.Router();
@@ -23,26 +21,13 @@ router.all('/me', authenticate(), async (req, res) => {
     return;
   }
 
-  let userMetadata = null;
-  if (metadataApps.includes(req.proxy)) {
-    try {
-      userMetadata = req.role === 'app'
-        ? await getUserMetadata(req.proxy, req.user)
-        : undefined;
-    } catch (err) {
-      console.error(`Get user metadata of @${req.user} failed`, err);
-      res.status(501).send('request failed');
-      return;
-    }
-  }
-
   res.json({
     user: req.user,
     _id: req.user,
     name: req.user,
     account: accounts[0],
     scope,
-    user_metadata: userMetadata,
+    user_metadata: null,
   });
 });
 
@@ -129,7 +114,7 @@ router.all('/oauth2/token/revoke', authenticate('app'), async (req, res) => {
 });
 
 /** Update user_metadata */
-router.put('/me', authenticate('app'), async (req, res) => {
+router.put('/me', (req, res) => {
   res.status(413).json({
     error: 'invalid_request',
     error_description: 'This feature has been deprecated',
